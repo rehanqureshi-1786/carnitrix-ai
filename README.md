@@ -1,68 +1,159 @@
 # ☢️ Carnitrix-ai
+AI-Powered Code Evolution & Risk Intelligence Engine
 
-**AI-Powered Code Evolution & Risk Intelligence Engine**
+Carnitrix-ai is a CLI tool that acts as a security guard and code doctor for your projects. It scans your codebase, identifies issues before they become bugs, predicts potential failure points, and can even autonomously fix code using AI.
 
-Carnitrix-ai is a CLI tool that acts like a security guard and code doctor for your projects. It scans your codebase, finds problems before they become bugs, predicts where failures might happen, and can even fix code using AI.
+## 🎯 Features
+### 🔍 Project Scanning
+Complexity analysis
+Security vulnerability detection
+Code smell identification
+Git volatility scoring
+### 🛡️ Security Audit
+Detects:
 
-## 🎯 What Does It Do?
+Hardcoded API keys and passwords
+SQL injection risks
+XSS vulnerabilities
+Buffer overflow patterns
+Command injection risks
+Unsafe eval usage
+### 🔮 Failure Forecasting
+Uses Git history to predict:
 
-Think of Carnitrix-ai as your code's personal bodyguard. It:
+Files most likely to break
+High-risk areas based on edit frequency
+Complexity growth trends
+### 🤖 AI Code Repair
+Automatic refactoring suggestions
+Security improvements
+Complexity reduction
+Code smell fixes
+### 📊 Risk Scoring
+Calculates a comprehensive risk score (0–100) based on:
 
-- 🔍 **Scans** your entire project for complexity, security issues, and code smells
-- 🛡️ **Detects** security vulnerabilities (buffer overflows, SQL injection, XSS, etc.)
-- 🔮 **Predicts** where bugs might happen next based on Git history
-- 🤖 **Fixes** code automatically using Google's Gemini AI
-- 📊 **Tracks** how your code evolves over time
-- 🎬 **Demos** everything in a cinematic mode perfect for hackathons
+Complexity (23%)
+Security (0%)
+Git Volatility (0%)
+Code Smells (0%)
+Note: Risk score weights are currently placeholder values and will be refined in future updates.
 
 ## 🚀 Quick Start
-
 ### Installation
 
-# Clone the repository
+### Clone the repository
 git clone https://github.com/rehanqureshi-1786/carnitrix-ai.git
 cd carnitrix-ai
 
-# Install dependencies
+### Install dependencies
 npm install
 
-# Build the project
-npm run build### First Run (Demo Mode)
-ash
-# Run the automated hackathon demo
+### Build the project
+npm run build
+
+### CLI Commands
+Command	Description
+scan	Analyze entire project for issues
+review	Check latest Git commit for problems
+trend <file>	Show how a file has changed over time
+forecast	Predict where bugs might happen next
+security	Run full security audit
+exploit-sim <file>	Simulate exploit vectors (safe)
+fix <file>	AI-powered code repair (requires API key)
+demo	Run automated hackathon demonstration
+
+### First Run (Demo Mode)
+### Run the automated hackathon demo
 npm start demo
 
-# Or with cinematic animations
-npm start demo --cinematic## 📖 Usage
+### Or with cinematic animations
+npm start demo --cinematic
 
-### Basic Commands
+Demo includes:
 
-# Scan your entire project
-npm start scan
+Autonomous Integrity Scan – Comprehensive code analysis
+Exploit Vector Simulation – Safe vulnerability demonstration
+Predictive Failure Analysis – Git-based forecasting
+AI-Guided Defensive Measures – AI integration showcase
+## Usage Example
+### Scan and save results to a markdown report
+npm start scan --output project_report.md
 
-# Review your latest Git changes
-npm start review
+### Run AI-powered code repair
+npm start fix src/your-file.ts
 
-# Check a specific file's evolution over time
-npm start trend src/cli.ts
+## 🤖 AI Features (Optional)
+To use AI-powered code repair:
 
-# Predict where bugs might happen
-npm start forecast
+Get your API key from Google AI Studio
+Create a .env file in the project root:
+GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
 
-# Run a security audit
-npm start security
+(Alternatively, use GOOGLE_API_KEY)
+Run the AI repair:
+npm start fix src/your-file.ts
 
-# Simulate exploit vectors on a file (safe, non-destructive)
-npm start exploit-sim assets/vulnerable_demo.cpp
+## 🎬 Hackathon Demo Mode
+The demo mode showcases all features in an automated sequence:
 
-# Fix a file using AI (requires API key)
-npm start fix src/some-file.ts### Generate Reports
+npm start demo
 
-# Scan and save results to a markdown file
-npm start scan --output project_report.md## 🤖 AI Features (Optional)
+Features demonstrated:
 
-To use the AI-powered code fixing feature, you'll need a Google Gemini API key:
+Autonomous Integrity Scan
+Exploit Vector Simulation
+Predictive Failure Analysis
+AI-Guided Defensive Measures
+## 🛠️ Development
+### Build TypeScript
+npm run build
 
-1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a `.env` file in the project root:
-   
+### Run in development mode
+npm run dev
+
+### Start the CLI
+npm start
+
+## 📁 Project Structure
+
+carnitrix-ai/
+
+├── src/
+
+│   ├── ai/             # AI integration (Gemini)
+
+│   ├── cli/            # CLI commands and demo
+
+│   ├── core/           # Core scanning and analysis
+
+│   ├── git/            # Git history analysis
+
+│   ├── risk/           # Risk scoring and forecasting
+
+│   ├── security/       # Security auditing
+
+│   └── utils/          # Visuals, animations, reports
+
+├── assets/             # Demo files
+
+├── dist/               # Compiled JavaScript
+
+└── package.json
+
+## 📝 License
+MIT
+
+## 🙏 Acknowledgments
+Built with:
+
+TypeScript
+Google Gemini AI for code repair
+Commander.js for CLI
+Chalk and @clack/prompts for beautiful terminal UI 
+Made with ☢️ for the GitHub Copilot CLI Hackathon
+
+TypeScript
+Google Gemini AI for code repair
+Commander.js for CLI
+Chalk and @clack/prompts for beautiful terminal UI 
+Made with ☢️ for the GitHub Copilot CLI Hackathon

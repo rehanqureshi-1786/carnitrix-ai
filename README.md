@@ -49,7 +49,17 @@ This project **uses GitHub Copilot CLI** as its primary AI engine for code fixin
 
 **Try it:**
 ```bash
-npm start fix src/your-file.ts
+# Fix a file using AI (uses GitHub Copilot CLI or Gemini)
+npm start fix assets/complex_code.ts  # works from any directory
+
+# Scan your project
+npm start scan                # normal scan
+npm start scan --stdout > project_report.md  # redirect output for reports
+npm start scan --output report.md          # absolute path output
+
+# Exploit simulation demo files
+npm start exploit-sim assets/vulnerable_demo.cpp  # C++ demo
+npm start exploit-sim assets/vulnerable_js.js     # JS demo
 ```
 
 This demonstrates how GitHub Copilot CLI can be integrated into CLI tools to provide AI-powered features.
@@ -84,8 +94,13 @@ npm start fix src/some-file.ts
 ### Generate Reports
 
 ```bash
-# Scan and save results to a markdown file
-npm start scan --output project_report.md
+# Scan Output Options
+
+# Redirect output to Markdown file
+npm start scan --stdout > project_report.md
+
+# Save to absolute path
+npm start scan --output report.md
 ```
 
 This will create a comprehensive markdown report with:
@@ -128,6 +143,16 @@ The AI fix feature will:
 - Keep the same logic but improve the structure
 - Create a backup (.bak file) before making changes
 
+## 🤖 AI Code Repair
+
+- Works from any directory (absolute paths used internally)
+- Creates backups (.bak) before applying changes
+- Supports TypeScript, JavaScript, and C++ demo files
+- Automatic refactoring suggestions
+- Security improvements
+- Complexity reduction
+- Code smell fixes
+
 ## 🎬 Hackathon Demo Mode
 
 The demo mode showcases all features in an automated sequence:
@@ -135,6 +160,11 @@ The demo mode showcases all features in an automated sequence:
 ```bash
 npm start demo
 ```
+### Demo Files
+- `assets/vulnerable_demo.cpp` — C++ buffer overflow vulnerabilities
+- `assets/vulnerable_js.js` — JavaScript vulnerabilities (XSS, SQL injection, eval, command injection)
+- `assets/complex_code.ts` — Complex TypeScript code for AI refactoring demo
+
 
 This will:
 1. Run a full project scan

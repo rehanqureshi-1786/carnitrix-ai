@@ -1,0 +1,6 @@
+{
+  "provider": "copilot",
+  "model": "Xenova/codegen-350M-mono",
+  "contextWindow": 5,
+  "autoSnapshot": true
+}

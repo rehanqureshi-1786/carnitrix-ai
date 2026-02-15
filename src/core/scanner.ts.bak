@@ -1,0 +1,65 @@
+import fs from 'fs';
+import path from 'path';
+import { ComplexityAnalyzer } from './complexity.js';
+import { SecurityAudit } from '../security/audit.js';
+import { SecurityFinding, ProjectContext } from '../types.js';
+import { GitEngine } from '../git/diff.js';
+
+export class Scanner {
+    private projectPath: string;
+
+    constructor(projectPath: string) {
+        this.projectPath = projectPath;
+    }
+
+    async scan(): Promise<ProjectContext> {
+        const files = this.getAllFiles(this.projectPath);
+        let totalComplexity = 0;
+        let totalVolatility = 0;
+        const highRiskFiles: string[] = [];
+        const securityFlags: SecurityFinding[] = [];
+
+        for (const file of files) {
+            const fullPath = path.join(this.projectPath, file);
+            const content = fs.readFileSync(fullPath, 'utf-8');
+            const complexity = ComplexityAnalyzer.getCyclomaticComplexity(content);
+            totalComplexity += complexity;
+
+            // Git Volatility
+            const volatility = GitEngine.getVolatilityScore(file);
+            totalVolatility += volatility;
+
+            // Security Audit
+            const findings = SecurityAudit.auditFile(fullPath);
+            securityFlags.push(...findings);
+
+            if (complexity > 20 || content.split('\n').length > 500 || volatility > 60) {
+                highRiskFiles.push(file);
+            }
+        }
+
+        return {
+            fileCount: files.length,
+            avgComplexity: files.length > 0 ? totalComplexity / files.length : 0,
+            highRiskFiles,
+            circularDependencies: [],
+            securityFlags,
+            gitVolatilityScore: files.length > 0 ? totalVolatility / files.length : 0
+        };
+    }
+
+    private getAllFiles(dir: string, fileList: string[] = []): string[] {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                if (!['node_modules', '.git', 'dist', '.actm_history'].includes(entry.name)) {
+                    this.getAllFiles(fullPath, fileList);
+                }
+            } else if (['.ts', '.js', '.tsx', '.jsx'].includes(path.extname(entry.name))) {
+                fileList.push(path.relative(this.projectPath, fullPath));
+            }
+        }
+        return fileList;
+    }
+}

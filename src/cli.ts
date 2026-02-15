@@ -14,6 +14,7 @@ import { Visuals } from './utils/visuals.js';
 import { ForecastEngine } from './risk/forecastEngine.js';
 import { ReportGenerator } from './utils/report.js';
 import { GeminiProvider } from './ai/gemini.js';
+import { CopilotProvider } from './ai/copilot.js';
 import { Animations } from './utils/animations.js';
 import { Personality } from './utils/personality.js';
 import { Avatar } from './utils/avatar.js';
@@ -29,14 +30,20 @@ if (process.env.DOTENV_CONFIG_QUIET !== 'true') {
 
 class CarnitrixCLI {
     program: Command;
-    private ai: GeminiProvider | null = null;
+    private ai: GeminiProvider | CopilotProvider | null = null;
     private cinematicMode: boolean = false;
 
     constructor() {
         this.program = new Command();
-        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-        if (apiKey) {
-            this.ai = new GeminiProvider(apiKey);
+        // Try GitHub Copilot CLI first, fallback to Gemini
+        try {
+            this.ai = new CopilotProvider();
+        } catch (err) {
+            // Fallback to Gemini if Copilot CLI not available
+            const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+            if (apiKey) {
+                this.ai = new GeminiProvider(apiKey);
+            }
         }
         this.setupCommands();
     }
@@ -182,7 +189,7 @@ class CarnitrixCLI {
                 p.intro(chalk.red(`${Visuals.getWatchIcon()} Carnitrix AI Repair`));
 
                 if (!this.ai) {
-                    p.log.error('Gemini API key not found in .env file.');
+                    p.log.error('No AI provider available. Install GitHub Copilot CLI or set GOOGLE_GENERATIVE_AI_API_KEY in .env file.');
                     return;
                 }
 
@@ -193,7 +200,8 @@ class CarnitrixCLI {
 
                 const content = fs.readFileSync(file, 'utf-8');
                 const s = p.spinner();
-                s.start(`Analyzing problems in ${file} with Gemini...`);
+                const aiName = this.ai instanceof CopilotProvider ? 'GitHub Copilot CLI' : 'Gemini';
+                s.start(`Analyzing problems in ${file} with ${aiName}...`);
 
                 try {
                     const prompt = `Act as a senior software architect. Analyze the follow code for complexity, security risks, and code smells. Provide a refactored version that is safer and more efficient. Keep the same logic but improve the structure. Return ONLY the refactored code without explanation.\n\nCode:\n${content}`;

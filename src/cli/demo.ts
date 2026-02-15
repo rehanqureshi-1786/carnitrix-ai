@@ -4,6 +4,7 @@ import { Scanner } from '../core/scanner.js';
 import { RiskEngine } from '../risk/riskEngine.js';
 import { ExploitSimulator } from '../security/exploitSimulator.js';
 import { GeminiProvider } from '../ai/gemini.js';
+import { CopilotProvider } from '../ai/copilot.js';
 import { ForecastEngine } from '../risk/forecastEngine.js';
 import { Animations } from '../utils/animations.js';
 import { Personality } from '../utils/personality.js';
@@ -172,11 +173,22 @@ export class DemoMode {
     private async demoFix(): Promise<void> {
         console.log(chalk.red.bold('\n[4/4] AI-GUIDED DEFENSIVE MEASURES\n'));
 
-        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+        // Try GitHub Copilot CLI first
+        let aiProvider: string = 'None';
+        try {
+            const copilot = new CopilotProvider();
+            aiProvider = 'GitHub Copilot CLI';
+        } catch (err) {
+            // Fallback to Gemini
+            const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+            if (apiKey) {
+                aiProvider = 'Gemini';
+            }
+        }
 
-        if (!apiKey) {
-            console.log(chalk.yellow('  ⚠ Gemini API key not configured'));
-            console.log(chalk.dim('  Skipping AI repair demonstration\n'));
+        if (aiProvider === 'None') {
+            console.log(chalk.yellow('  ⚠ No AI provider available'));
+            console.log(chalk.dim('  Install GitHub Copilot CLI or set GOOGLE_GENERATIVE_AI_API_KEY\n'));
             return;
         }
 
@@ -185,7 +197,7 @@ export class DemoMode {
             await this.sleep(500);
         }
 
-        console.log(chalk.green('  ✔ Gemini 2.5 Flash integration: ACTIVE'));
+        console.log(chalk.green(`  ✔ ${aiProvider} integration: ACTIVE`));
         console.log(chalk.green('  ✔ Code repair capabilities: OPERATIONAL'));
         console.log(chalk.dim('  Use `carnitrix fix <file>` for AI-guided refactoring\n'));
     }

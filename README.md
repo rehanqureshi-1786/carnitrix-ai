@@ -36,9 +36,6 @@ npm run build
 ```bash
 # Run the automated hackathon demo
 npm start demo
-
-# Or with cinematic animations
-npm start demo --cinematic
 ```
 
 ## 🛠️ Built with GitHub Copilot CLI

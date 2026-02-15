@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
 import fs from 'fs';
+import path from 'path';
 import * as dotenv from 'dotenv';
 import { Scanner } from './core/scanner.js';
 import { RiskEngine } from './risk/riskEngine.js';
@@ -66,46 +67,67 @@ class CarnitrixCLI {
         this.program
             .command('scan')
             .description('Check the whole project for issues')
-            .option('-o, --output <file>', 'Save results to a Markdown report')
+            .option('-o, --output <file>', 'Save results to a Markdown report file')
+            .option('--stdout', 'Output report to stdout (for piping/redirection)')
             .action(async (options) => {
                 const intro = this.cinematicMode
                     ? Personality.commandIntro('scan')
                     : `${Visuals.getWatchIcon()} Carnitrix Project Scan`;
-                p.intro(chalk.red(intro));
+                
+                // Only show interactive UI if not outputting to stdout
+                if (!options.stdout) {
+                    p.intro(chalk.red(intro));
+                }
+                
                 const s = p.spinner();
-                s.start('Analyzing all files and Git history...');
-
-                const scanner = new Scanner(process.cwd());
-                const context = await scanner.scan();
-                const risk = RiskEngine.analyze(context);
-                const forecasts = ForecastEngine.analyze(process.cwd(), context.highRiskFiles);
-
-                s.stop('Analysis complete');
-
-                p.note(
-                    `Files: ${context.fileCount}\n` +
-                    `Avg Complexity: ${context.avgComplexity.toFixed(2)}\n` +
-                    `High Risk Files: ${context.highRiskFiles.length}\n` +
-                    `Security Issues: ${context.securityFlags.length}`,
-                    'Project Stats'
-                );
-
-                p.note(
-                    `Complexity: ${risk.complexity.toFixed(0)}%\n` +
-                    `Security: ${risk.security.toFixed(0)}%\n` +
-                    `Volatility: ${risk.gitVolatility.toFixed(0)}%\n` +
-                    `Code Smell: ${risk.codeSmell.toFixed(0)}%\n\n` +
-                    chalk.bold(`Final Risk Score: ${risk.finalScore.toFixed(0)}/100`),
-                    'Risk Intelligence Summary'
-                );
-
-                if (options.output) {
-                    const report = ReportGenerator.generate(context, risk, forecasts);
-                    ReportGenerator.save(options.output, report);
-                    p.log.success(`Report saved to ${chalk.underline(options.output)}`);
+                if (!options.stdout) {
+                    s.start('Analyzing all files and Git history...');
                 }
 
-                p.outro(chalk.red('Scan finished!'));
+                // Use absolute path to ensure it works from any directory
+                const projectPath = path.resolve(process.cwd());
+                const scanner = new Scanner(projectPath);
+                const context = await scanner.scan();
+                const risk = RiskEngine.analyze(context);
+                const forecasts = ForecastEngine.analyze(projectPath, context.highRiskFiles);
+
+                if (!options.stdout) {
+                    s.stop('Analysis complete');
+
+                    p.note(
+                        `Files: ${context.fileCount}\n` +
+                        `Avg Complexity: ${context.avgComplexity.toFixed(2)}\n` +
+                        `High Risk Files: ${context.highRiskFiles.length}\n` +
+                        `Security Issues: ${context.securityFlags.length}`,
+                        'Project Stats'
+                    );
+
+                    p.note(
+                        `Complexity: ${risk.complexity.toFixed(0)}%\n` +
+                        `Security: ${risk.security.toFixed(0)}%\n` +
+                        `Volatility: ${risk.gitVolatility.toFixed(0)}%\n` +
+                        `Code Smell: ${risk.codeSmell.toFixed(0)}%\n\n` +
+                        chalk.bold(`Final Risk Score: ${risk.finalScore.toFixed(0)}/100`),
+                        'Risk Intelligence Summary'
+                    );
+                }
+
+                const report = ReportGenerator.generate(context, risk, forecasts);
+
+                if (options.stdout) {
+                    // Output to stdout for piping/redirection
+                    console.log(report);
+                } else if (options.output) {
+                    // Save to file using absolute path
+                    const outputPath = path.isAbsolute(options.output) 
+                        ? options.output 
+                        : path.resolve(process.cwd(), options.output);
+                    ReportGenerator.save(outputPath, report);
+                    p.log.success(`Report saved to ${chalk.underline(outputPath)}`);
+                    p.outro(chalk.red('Scan finished!'));
+                } else {
+                    p.outro(chalk.red('Scan finished!'));
+                }
             });
 
         this.program
@@ -139,8 +161,10 @@ class CarnitrixCLI {
             .description('Show how this file has changed over time')
             .action(async (file) => {
                 p.intro(chalk.red(`${Visuals.getWatchIcon()} Carnitrix File History`));
-                const evolution = await EvolutionEngine.analyze(file);
-                const volatility = GitEngine.getVolatilityScore(file);
+                // Resolve file path to absolute path
+                const filePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+                const evolution = await EvolutionEngine.analyze(filePath);
+                const volatility = GitEngine.getVolatilityScore(filePath);
 
                 p.note(
                     `File: ${evolution.fileName}\n` +
@@ -160,9 +184,10 @@ class CarnitrixCLI {
                 const s = p.spinner();
                 s.start('Mining Git patterns...');
 
-                const scanner = new Scanner(process.cwd());
+                const projectPath = path.resolve(process.cwd());
+                const scanner = new Scanner(projectPath);
                 const context = await scanner.scan();
-                const forecasts = ForecastEngine.analyze(process.cwd(), context.highRiskFiles);
+                const forecasts = ForecastEngine.analyze(projectPath, context.highRiskFiles);
 
                 s.stop('Forecast complete');
 
@@ -193,15 +218,18 @@ class CarnitrixCLI {
                     return;
                 }
 
-                if (!fs.existsSync(file)) {
-                    p.log.error(`File not found: ${file}`);
+                // Resolve file path to absolute path
+                const filePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+                
+                if (!fs.existsSync(filePath)) {
+                    p.log.error(`File not found: ${filePath}`);
                     return;
                 }
 
-                const content = fs.readFileSync(file, 'utf-8');
+                const content = fs.readFileSync(filePath, 'utf-8');
                 const s = p.spinner();
                 const aiName = this.ai instanceof CopilotProvider ? 'GitHub Copilot CLI' : 'Gemini';
-                s.start(`Analyzing problems in ${file} with ${aiName}...`);
+                s.start(`Analyzing problems in ${path.basename(filePath)} with ${aiName}...`);
 
                 try {
                     const prompt = `Act as a senior software architect. Analyze the follow code for complexity, security risks, and code smells. Provide a refactored version that is safer and more efficient. Keep the same logic but improve the structure. Return ONLY the refactored code without explanation.\n\nCode:\n${content}`;
@@ -212,11 +240,11 @@ class CarnitrixCLI {
 
                     const confirmed = await p.confirm({ message: 'Apply suggested fixes?' });
                     if (confirmed) {
-                        fs.writeFileSync(`${file}.bak`, content);
+                        fs.writeFileSync(`${filePath}.bak`, content);
                         // Strip markdown code blocks if AI included them
                         const cleanedFix = fix.replace(/```[a-z]*\n|```/g, '').trim();
-                        fs.writeFileSync(file, cleanedFix);
-                        p.log.success('Repairs applied successfully. Backup created as .bak');
+                        fs.writeFileSync(filePath, cleanedFix);
+                        p.log.success(`Repairs applied successfully. Backup created as ${filePath}.bak`);
                     } else {
                         p.log.warn('Repair canceled.');
                     }
@@ -233,7 +261,8 @@ class CarnitrixCLI {
             .description('Check for security holes and leaks')
             .action(() => {
                 p.intro(chalk.red(`${Visuals.getWatchIcon()} Carnitrix Security Audit`));
-                const scanner = new Scanner(process.cwd());
+                const projectPath = path.resolve(process.cwd());
+                const scanner = new Scanner(projectPath);
                 scanner.scan().then(context => {
                     p.note(
                         context.securityFlags.map(f => `${f.severity || '??'}: ${f.type} in ${f.file}:${f.line}`).join('\n') || 'No security holes found!',
@@ -253,8 +282,11 @@ class CarnitrixCLI {
                     : `${Visuals.getWatchIcon()} Carnitrix Exploit Simulation`;
                 p.intro(chalk.red(intro));
 
-                if (!fs.existsSync(file)) {
-                    p.log.error(`File not found: ${file}`);
+                // Resolve file path to absolute path
+                const filePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+                
+                if (!fs.existsSync(filePath)) {
+                    p.log.error(`File not found: ${filePath}`);
                     p.outro(chalk.red('Aborted.'));
                     return;
                 }
@@ -263,7 +295,7 @@ class CarnitrixCLI {
                 s.start('Analyzing threat surface...');
 
                 try {
-                    const result = await ExploitSimulator.analyze(file);
+                    const result = await ExploitSimulator.analyze(filePath);
                     s.stop('Analysis complete');
 
                     const simulation = await ExploitSimulator.simulateImpact(result);
